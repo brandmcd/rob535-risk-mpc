@@ -56,7 +56,11 @@ class MPC:
             if k > 0:
                 cost += 0.5 * ca.sumsqr(U[:, k] - U[:, k - 1])
             if mode == "risk":
-                risk += F(along(nxt, car.rear_to_front)) * nxt[3] * dt
+                # trapezoid over start, middle and end of the step so a narrow hazard band
+                # between knots (2 m apart at 10 m/s) is not skipped
+                f0, f1 = along(xk, car.rear_to_front), along(nxt, car.rear_to_front)
+                ds = 0.5 * (xk[3] + nxt[3]) * dt
+                risk += (0.25 * F(f0) + 0.5 * F(0.5 * (f0 + f1)) + 0.25 * F(f1)) * ds
             else:
                 for off in (-car.length / 3, 0.0, car.length / 3):
                     cons.append(F(along(nxt, car.rear_to_center + off)))
