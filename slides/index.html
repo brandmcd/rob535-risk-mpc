@@ -418,9 +418,14 @@
 
 <!-- 20c closed loop -->
 <section class="slide" id="stage2c">
-  <h2>Stage 2 result: closed loop</h2>
-  <p class="kicker"><span class="tag run">running</span> 1,845 runs: risk MPC at &delta; = 0.02&ndash;0.2 with raw, temperature-scaled and path-scaled maps, and the threshold baseline</p>
-  <p>This slide fills in when the runs finish: collision rate (against Occ3D) vs &delta;, and safety vs progress against &tau;.</p>
+  <h2>Stage 2 result: closed loop on nuScenes mini</h2>
+  <p class="kicker">123 scenarios &times; 15 planner settings = 1,845 runs; collision = swept footprint hits an observed Occ3D obstacle</p>
+  <div class="figwrap" style="flex:1.4"><img class="fig" src="figs/nusc_planning.png" alt="closed loop"></div>
+  <ul class="small" style="margin-top:8px">
+    <li>The risk MPC <strong>never exceeded its budget</strong>: at most 3 / 123 collisions (2.4%) at &delta; = 0.2 with the path scale. Intervals are wide with 123 scenarios.</li>
+    <li>The <strong>path scale buys progress</strong>: at &delta; = 0.2, 89% reach the goal vs 61% with the raw map and &#8467; = 4 m. It sits slightly above the threshold baseline's curve (&tau; = 0.1: 71% at 1.6%; &tau; = 0.3: 94% at 6.5%).</li>
+    <li>At &delta; &le; 0.05 it rarely reaches the goal (&le; 20%): it brakes on the open-road probability floor. Observed collisions stay far below what the planner predicts, so in closed loop it is conservative.</li>
+  </ul>
 </section>
 
 <!-- Part 3 -->
@@ -468,7 +473,7 @@
     </div>
     <div class="col">
       <div class="card orange"><h3>NEXT</h3><ul class="small">
-        <li>Finish stage 2 runs; read the failure cases (<span class="tag run">running</span>)</li>
+        <li>Read the stage 2 failure cases: stops at small &delta;, the 3 collisions at &delta; = 0.2, frequent solver failures (about 12 per run)</li>
         <li>Answer the open questions (previous slide)</li>
         <li>Great Lakes: SurroundOcc &rarr; <code>pred.npz</code>, rerun stage 2</li>
         <li>Optional ablations: &#8467; / margin / blur; Platt scaling</li>

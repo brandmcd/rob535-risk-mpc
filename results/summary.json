@@ -182,5 +182,278 @@
    "pred_risk": 0.0309,
    "reach": 0.68
   }
+ ],
+ "path_level": {
+  "paths": 7380,
+  "collide": 0.4489159891598916,
+  "scale": {
+   "H_max_raw": {
+    "0": 0.12043206807592012,
+    "1": 0.11626325405772028,
+    "2": 0.19071432639615757,
+    "3": 0.11511251203044637,
+    "all": 0.1280676700925068
+   },
+   "H_mean_raw": {
+    "0": 0.12066140388086984,
+    "1": 0.1251762545115394,
+    "2": 0.178906330264504,
+    "3": 0.11276781123715023,
+    "all": 0.12864907144287382
+   },
+   "H_max_cal": {
+    "0": 0.12353063196315221,
+    "1": 0.11690700492109023,
+    "2": 0.20564942002643666,
+    "3": 0.11853918157413743,
+    "all": 0.13171679977838743
+   },
+   "H_mean_cal": {
+    "0": 0.1301122181371623,
+    "1": 0.12837728935703596,
+    "2": 0.20748688771149254,
+    "3": 0.1257739453061297,
+    "all": 0.13997755659095087
+   }
+  },
+  "raw net, l = 4 m": {
+   "ece": 0.08889980358430423,
+   "mean_pred": 0.5378157927441958
+  },
+  "temperature-scaled, l = 4 m": {
+   "ece": 0.07796734517356117,
+   "mean_pred": 0.5268833343334528
+  },
+  "temperature + path scale (other folds)": {
+   "ece": 0.025640207237566822,
+   "mean_pred": 0.4592511400093045
+  }
+ },
+ "nusc": [
+  {
+   "mode": "risk",
+   "param": 0.02,
+   "variant": "cal",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.021,
+   "reach": 0.0244,
+   "corr_len": 4.0,
+   "time": 1.9333,
+   "path_len": 6.3713
+  },
+  {
+   "mode": "risk",
+   "param": 0.02,
+   "variant": "path",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0128,
+   "reach": 0.0894,
+   "corr_len": 7.2091,
+   "time": 2.1455,
+   "path_len": 6.8463
+  },
+  {
+   "mode": "risk",
+   "param": 0.02,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0266,
+   "reach": 0.0,
+   "corr_len": 4.0,
+   "time": NaN,
+   "path_len": 6.2007
+  },
+  {
+   "mode": "risk",
+   "param": 0.05,
+   "variant": "cal",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0231,
+   "reach": 0.1382,
+   "corr_len": 4.0,
+   "time": 2.1882,
+   "path_len": 7.3628
+  },
+  {
+   "mode": "risk",
+   "param": 0.05,
+   "variant": "path",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0153,
+   "reach": 0.1951,
+   "corr_len": 7.2091,
+   "time": 2.4667,
+   "path_len": 8.2366
+  },
+  {
+   "mode": "risk",
+   "param": 0.05,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0288,
+   "reach": 0.1057,
+   "corr_len": 4.0,
+   "time": 2.1385,
+   "path_len": 7.0639
+  },
+  {
+   "mode": "risk",
+   "param": 0.1,
+   "variant": "cal",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0544,
+   "reach": 0.2683,
+   "corr_len": 4.0,
+   "time": 3.1939,
+   "path_len": 11.2972
+  },
+  {
+   "mode": "risk",
+   "param": 0.1,
+   "variant": "path",
+   "n": 123,
+   "collisions": 1,
+   "rate": 0.0081,
+   "lo": 0.0014,
+   "hi": 0.0446,
+   "pred_risk": 0.0867,
+   "reach": 0.6911,
+   "corr_len": 7.2091,
+   "time": 3.2612,
+   "path_len": 21.8869
+  },
+  {
+   "mode": "risk",
+   "param": 0.1,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.0558,
+   "reach": 0.3659,
+   "corr_len": 4.0,
+   "time": 2.76,
+   "path_len": 11.8421
+  },
+  {
+   "mode": "risk",
+   "param": 0.2,
+   "variant": "cal",
+   "n": 123,
+   "collisions": 1,
+   "rate": 0.0081,
+   "lo": 0.0014,
+   "hi": 0.0446,
+   "pred_risk": 0.1718,
+   "reach": 0.7805,
+   "corr_len": 4.0,
+   "time": 3.2958,
+   "path_len": 26.2087
+  },
+  {
+   "mode": "risk",
+   "param": 0.2,
+   "variant": "path",
+   "n": 123,
+   "collisions": 3,
+   "rate": 0.0244,
+   "lo": 0.0083,
+   "hi": 0.0693,
+   "pred_risk": 0.1435,
+   "reach": 0.8862,
+   "corr_len": 7.2091,
+   "time": 3.3248,
+   "path_len": 29.0353
+  },
+  {
+   "mode": "risk",
+   "param": 0.2,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 0,
+   "rate": 0.0,
+   "lo": 0.0,
+   "hi": 0.0303,
+   "pred_risk": 0.1529,
+   "reach": 0.6098,
+   "corr_len": 4.0,
+   "time": 3.152,
+   "path_len": 22.3038
+  },
+  {
+   "mode": "threshold",
+   "param": 0.1,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 2,
+   "rate": 0.0163,
+   "lo": 0.0045,
+   "hi": 0.0574,
+   "pred_risk": 0.1624,
+   "reach": 0.7073,
+   "corr_len": 4.0,
+   "time": 3.2782,
+   "path_len": 25.61
+  },
+  {
+   "mode": "threshold",
+   "param": 0.3,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 8,
+   "rate": 0.065,
+   "lo": 0.0333,
+   "hi": 0.1231,
+   "pred_risk": 0.2496,
+   "reach": 0.9431,
+   "corr_len": 4.0,
+   "time": 3.4517,
+   "path_len": 29.2472
+  },
+  {
+   "mode": "threshold",
+   "param": 0.5,
+   "variant": "raw",
+   "n": 123,
+   "collisions": 7,
+   "rate": 0.0569,
+   "lo": 0.0278,
+   "hi": 0.1128,
+   "pred_risk": 0.2605,
+   "reach": 0.9756,
+   "corr_len": 4.0,
+   "time": 3.49,
+   "path_len": 28.9107
+  }
  ]
 }
