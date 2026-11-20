@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Risk-Budgeted MPC on Learned Occupancy: project briefing</title>
+<style>
+  :root {
+    --bg: #f6f5f1; --paper: #ffffff; --ink: #1d1d1b; --ink-2: #4a4a45; --muted: #7a7a72;
+    --rule: #dcdad2; --blue: #2a78d6; --blue-soft: #e3eefb; --orange: #eb6834; --orange-soft: #fdebe3;
+    --green: #2f8f5b; --green-soft: #e2f3ea;
+    --serif: "Iowan Old Style", "Charter", "Georgia", "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  html, body { margin: 0; height: 100%; background: #2b2b28; }
+  body { font-family: var(--sans); color: var(--ink); overflow: hidden; }
+  #deck { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform-origin: center center; }
+  .slide { position: absolute; inset: 0; display: none; flex-direction: column; box-sizing: border-box;
+           background: var(--bg); padding: 48px 68px 52px; }
+  .slide.on { display: flex; }
+  .slide h1 { font-family: var(--serif); font-weight: 600; font-size: 50px; line-height: 1.1; margin: 0 0 16px; }
+  .slide h2 { font-family: var(--serif); font-weight: 600; font-size: 34px; line-height: 1.15; margin: 0 0 4px; }
+  .slide .kicker { font-size: 16px; color: var(--muted); margin: 0 0 20px; }
+  .slide p, .slide li { font-size: 21px; line-height: 1.42; color: var(--ink-2); margin: 0 0 10px; }
+  .slide ul { margin: 0; padding-left: 26px; }
+  .slide li { margin-bottom: 8px; }
+  .slide strong { color: var(--ink); font-weight: 600; }
+  .small, .slide .small li, .slide p.small { font-size: 17px; }
+  .tiny { font-size: 14px !important; color: var(--muted) !important; }
+  code, .m { font-family: var(--mono); font-size: 0.9em; background: #ecebe5; padding: 1px 5px; border-radius: 3px; }
+  .eq { font-family: var(--serif); font-size: 24px; background: var(--paper); border: 1px solid var(--rule);
+        border-radius: 6px; padding: 12px 18px; margin: 8px 0 14px; color: var(--ink); }
+  .row { display: flex; gap: 26px; flex: 1; min-height: 0; }
+  .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .card { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 16px 20px; margin-bottom: 14px; }
+  .card h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin: 0 0 8px; letter-spacing: .02em; }
+  .card p, .card li { font-size: 18px; }
+  .blue { border-left: 5px solid var(--blue); } .orange { border-left: 5px solid var(--orange); }
+  .green { border-left: 5px solid var(--green); }
+  img.fig { max-width: 100%; max-height: 100%; object-fit: contain; display: block; margin: 0 auto; }
+  .figwrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+  table { border-collapse: collapse; width: 100%; font-size: 16px; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid var(--rule); vertical-align: top; color: var(--ink-2); }
+  th { color: var(--muted); font-weight: 600; font-size: 14px; }
+  .foot { position: absolute; left: 68px; right: 68px; bottom: 16px; font-size: 13px; color: var(--muted);
+          border-top: 1px solid var(--rule); padding-top: 7px; display: flex; justify-content: space-between; }
+  .title-slide { justify-content: center; }
+  .part { justify-content: center; background: #1f2a36; }
+  .part h1 { color: #fff; } .part p { color: #c9d3de; }
+  .tag { display: inline-block; font-size: 13px; padding: 2px 8px; border-radius: 10px; margin-right: 6px; }
+  .tag.done { background: var(--green-soft); color: var(--green); }
+  .tag.todo { background: var(--orange-soft); color: var(--orange); }
+  .tag.run { background: var(--blue-soft); color: var(--blue); }
+  #nav { position: fixed; right: 14px; bottom: 10px; color: #aaa; font: 13px var(--sans); }
+</style>
+</head>
+<body>
+<div id="deck">
+
+<!-- 1 -->
+<section class="slide title-slide">
+  <p class="kicker">ROB 535 / NAVARCH 565 final project, Team 37 &middot; briefing deck, Nov 20, 2026</p>
+  <h1>Risk-Budgeted MPC on Learned Occupancy</h1>
+  <p>What the project is, the ideas it rests on, the five papers, what is built and running, and what is left.</p>
+  <p class="small">Repo: <code>github.com/brandmcd/rob535-risk-mpc</code> (private) &middot; arrow keys or click to move</p>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <h2>The project in one paragraph</h2>
+  <p class="kicker">From the proposal, unchanged</p>
+  <p>A self-driving car's perception network outputs, for every patch of ground around the car, a <strong>probability that the patch is occupied</strong>. Most planners round that to occupied or free and plan as if the map were certain. We plan with the probabilities directly: the controller keeps the <strong>chance of collision along the whole drive below a budget</strong> &delta; (for example 5%).</p>
+  <div class="row" style="flex:none; margin:6px 0 10px">
+    <div class="col"><div class="card blue"><h3>QUESTION 1</h3><p>Does planning with probabilities make the car safer, and what does it cost in progress?</p></div></div>
+    <div class="col"><div class="card orange"><h3>QUESTION 2</h3><p>Can the car trust a real network's probabilities? If it is told "5%", is the real rate 5%? If not, can a recalibration fix it?</p></div></div>
+  </div>
+  <p class="small">Project type: combination of methods (syllabus type 1). Perception (occupancy network) + control (MPC) + risk limit (chance constraint), plus a calibration check neither source paper makes.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <h2>Deadlines</h2>
+  <p class="kicker">No late submission for the poster or report</p>
+  <table>
+    <tr><th>Date</th><th>What</th><th>Status</th></tr>
+    <tr><td>Fri Nov 20</td><td>Proposal's decision point: SurroundOcc on a GPU, or a fallback</td><td><span class="tag done">decided</span>CPU LiDAR network now, SurroundOcc on Great Lakes later</td></tr>
+    <tr><td>Mon Nov 23</td><td>Hydra paper talk</td><td>separate deck</td></tr>
+    <tr><td>Wed Nov 25 &ndash; Fri Nov 27</td><td>Thanksgiving</td><td></td></tr>
+    <tr><td><strong>Fri Dec 4</strong></td><td>Poster PDF on Canvas (Canvas date; syllabus prose says Dec 7)</td><td><span class="tag todo">todo</span></td></tr>
+    <tr><td>Mon Dec 7, 15:00</td><td>Poster session, printed poster</td><td><span class="tag todo">todo</span></td></tr>
+    <tr><td><strong>Fri Dec 11</strong></td><td>Four-page IEEE report + .tex + repo link</td><td><span class="tag todo">todo</span></td></tr>
+  </table>
+  <p class="small" style="margin-top:18px">Grade weight: proposal 2%, poster 8%, report 15% of the course.</p>
+</section>
+
+<!-- Part 1 -->
+<section class="slide part">
+  <h1>Part 1. The ideas, from first principles</h1>
+  <p>Occupancy grids, where their probabilities come from, MPC, risk budgets, and calibration.</p>
+</section>
+
+<!-- 5 occupancy grid -->
+<section class="slide">
+  <h2>An occupancy grid</h2>
+  <p class="kicker">The map the planner reads</p>
+  <div class="row">
+    <div class="col">
+      <p>Cut the ground around the car into square <strong>cells</strong>. Ours: 200 &times; 200 cells of 0.4 m, covering 80 m &times; 80 m, car at the center, x forward, y left.</p>
+      <p>Each cell holds <strong>p</strong> = probability that something solid is in it (a car, a wall, a pole, a person).</p>
+      <p>The 3D version stacks layers of <strong>voxels</strong> (3D cells). We flatten to 2D: a column is an obstacle if any voxel between 0.2 m and 2.2 m above the road is occupied.</p>
+      <p class="small">p = 0.97 on the wall of a building; p = 0.3 behind a parked truck the sensor cannot see past; p = 0.01 on open road.</p>
+    </div>
+    <div class="col">
+      <svg viewBox="0 0 400 400" width="100%" height="100%">
+        <g id="g"></g>
+        <rect x="180" y="190" width="40" height="20" fill="none" stroke="#2a78d6" stroke-width="3"/>
+        <text x="200" y="232" font-size="13" text-anchor="middle" fill="#2a78d6">ego car</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 6 network -->
+<section class="slide">
+  <h2>Where the probabilities come from</h2>
+  <p class="kicker">Paper 1: SurroundOcc (Wei et al., ICCV 2023)</p>
+  <div class="row">
+    <div class="col">
+      <p>A <strong>perception network</strong> takes sensor data and outputs, per voxel, a score. A sigmoid turns the score (the <strong>logit</strong> z) into a probability:</p>
+      <div class="eq">p = &sigma;(z) = 1 / (1 + e<sup>&minus;z</sup>)</div>
+      <p><strong>SurroundOcc</strong> does this from the car's six cameras alone: it lifts image features into a 3D volume with attention and predicts dense 3D occupancy. It also built dense training labels by fusing many LiDAR frames.</p>
+      <p>It needs a GPU. Our CPU stand-in today: a small U-Net on one LiDAR sweep (slide 19). Same output format, so SurroundOcc drops in later.</p>
+    </div>
+    <div class="col">
+      <div class="card blue"><h3>WHAT WE TAKE FROM IT</h3><p>The input to our planner: a per-cell probability map from a real network, with whatever calibration errors that network has.</p></div>
+      <div class="card"><h3>WHY IT MATTERS FOR US</h3><p>Networks trained with cross-entropy are often over- or under-confident. A planner that trusts "5%" literally inherits that error.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 data -->
+<section class="slide">
+  <h2>The data and the ground truth</h2>
+  <p class="kicker">Paper 3: Occ3D (Tian et al., NeurIPS 2023) &middot; Paper 4: nuScenes (Caesar et al., CVPR 2020)</p>
+  <div class="row">
+    <div class="col">
+      <div class="card"><h3>nuScenes</h3>
+      <ul class="small"><li>1,000 driving scenes of 20 s in Boston and Singapore; 6 cameras, 1 LiDAR, 5 radars</li>
+      <li>Annotated <strong>keyframes</strong> at 2 Hz; ego pose for every sensor reading</li>
+      <li>We use <strong>v1.0-mini</strong>: 10 scenes, 404 keyframes, public download, 2.6 GB with LiDAR only</li></ul></div>
+    </div>
+    <div class="col">
+      <div class="card"><h3>Occ3D-nuScenes</h3>
+      <ul class="small"><li>Occupancy labels for every keyframe: 200 &times; 200 &times; 16 voxels of 0.4 m</li>
+      <li>17 semantic classes plus <strong>free</strong>; visibility masks say which voxels a sensor actually saw</li>
+      <li>We use it as truth: a run <strong>collides</strong> if the car's swept footprint covers an observed obstacle cell</li></ul></div>
+    </div>
+  </div>
+  <p class="small">Checked on the data: Occ3D is in the ego frame (70% of LiDAR points land in occupied voxels vs 32% in the sensor frame), and the road surface sits in voxel layer 2 (z &asymp; 0).</p>
+</section>
+
+<!-- 8 MPC -->
+<section class="slide">
+  <h2>Model predictive control (MPC)</h2>
+  <p class="kicker">Lecture 4 and HW1, applied to driving</p>
+  <div class="row">
+    <div class="col">
+      <p>At every control step (0.2 s):</p>
+      <ul class="small">
+        <li><strong>Predict</strong> the next N = 20 steps (4 s) with a car model</li>
+        <li><strong>Optimize</strong> the 20 inputs (acceleration, steering) to minimize a cost, subject to constraints</li>
+        <li><strong>Apply</strong> only the first input, measure, and <strong>repeat</strong> (receding horizon)</li>
+      </ul>
+      <p>Car model: the <strong>kinematic bicycle</strong>, state at the rear axle:</p>
+      <div class="eq" style="font-size:20px">x&#775; = v cos&psi;, &nbsp; y&#775; = v sin&psi;, &nbsp; &psi;&#775; = (v / L) tan &delta;<sub>s</sub>, &nbsp; v&#775; = a</div>
+      <p class="small">Solved with CasADi (symbolic modeling, automatic derivatives) and IPOPT (nonlinear interior-point solver), the HW2 toolchain. About 0.05 s per solve.</p>
+    </div>
+    <div class="col">
+      <svg viewBox="0 0 420 300" width="100%">
+        <path d="M30 240 Q 150 230 230 160 T 400 60" fill="none" stroke="#dcdad2" stroke-width="14"/>
+        <g fill="#2a78d6">
+          <circle cx="30" cy="240" r="7"/><circle cx="75" cy="236" r="4"/><circle cx="120" cy="226" r="4"/>
+          <circle cx="160" cy="208" r="4"/><circle cx="195" cy="186" r="4"/><circle cx="228" cy="162" r="4"/>
+          <circle cx="262" cy="136" r="4"/><circle cx="300" cy="113" r="4"/></g>
+        <text x="30" y="270" font-size="14" fill="#4a4a45">now</text>
+        <text x="250" y="105" font-size="14" fill="#2a78d6">planned 4 s</text>
+        <rect x="60" y="226" width="22" height="16" fill="#eb6834"/>
+        <text x="58" y="218" font-size="13" fill="#eb6834">apply this</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 9 baseline -->
+<section class="slide">
+  <h2>The usual approach: threshold the map</h2>
+  <p class="kicker">Our baseline</p>
+  <div class="row">
+    <div class="col">
+      <p>Pick a threshold &tau;. Cells with p &gt; &tau; are obstacles; everything else is free. Plan as if certain.</p>
+      <p>Our baseline MPC keeps three circles covering the car outside every obstacle cell (using a distance field: distance from each point to the nearest obstacle).</p>
+      <p>The flaw: a cell at p = 0.3 with &tau; = 0.5 is <strong>treated as open road</strong>. Low &tau; is safe but blocks roads; high &tau; is fast but drives through likely obstacles. And &tau; says nothing about the chance of a crash.</p>
+      <p class="small">We run several &tau; (0.05 to 0.5) so the comparison is fair: the risk planner must beat the best threshold, not a bad one.</p>
+    </div>
+    <div class="col">
+      <div class="figwrap"><img class="fig" src="figs/stage1_paths.png" alt="paths"></div>
+      <p class="tiny">Same map. Top: risk MPC (&delta; = 0.05) goes around everything. Bottom: threshold &tau; = 0.5 ignores the 0.21 and 0.34 objects (not obstacles at that &tau;). Numbers are each object's probability.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 10 chance constraint -->
+<section class="slide">
+  <h2>A risk budget: the chance constraint</h2>
+  <p class="kicker">Paper 2: Let's Make a Splan (Michaux, Isaacson et al., 2024)</p>
+  <div class="row">
+    <div class="col">
+      <p>Instead of declaring cells occupied or free, constrain the probability itself:</p>
+      <div class="eq">P(collision along the whole drive) &le; &delta;</div>
+      <p>&delta; is the <strong>risk budget</strong>. &delta; = 0.05 means "at most a 1 in 20 chance of hitting something on this drive".</p>
+      <p><strong>Splan</strong> does this for a robot moving through a <em>Gaussian splat</em> scene (a 3D scene made of many small Gaussian blobs): it bounds the collision probability of the robot's motion and keeps it under a threshold inside trajectory optimization.</p>
+    </div>
+    <div class="col">
+      <div class="card blue"><h3>WHAT WE TAKE FROM IT</h3><p>The idea of a hard collision-probability limit inside the optimizer.</p></div>
+      <div class="card orange"><h3>WHAT IS DIFFERENT</h3><p>Our map is an occupancy grid from a learned network, not a splat; our robot is a car with MPC; and we test whether the probability is <strong>true</strong>.</p></div>
+      <div class="card"><h3>ALSO CITED</h3><p class="small">Blackmore, Ono &amp; Williams 2011 (splitting a risk budget across time); Zhu &amp; Alonso-Mora 2019 (chance-constrained MPC).</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 11 path risk -->
+<section class="slide">
+  <h2>From cell probabilities to the risk of a path</h2>
+  <p class="kicker">The modeling choice everything else depends on</p>
+  <div class="row">
+    <div class="col">
+      <p><strong>First try: cells independent.</strong> P(no hit) = &prod;(1 &minus; p) over the cells the car covers. Failed: a blob of 50 cells at p = 0.05 gives 1 &minus; 0.95<sup>50</sup> = 92%. The car would not move, and the answer changes with grid size.</p>
+      <p><strong>What we use: a correlation length</strong> &#8467;. Cells closer than &#8467; are the same object (one event); farther apart, independent. With hazard h = &minus;log(1 &minus; p):</p>
+      <div class="eq" style="font-size:20px">G(x) = [max of h within &frac12; car width + 0.3 m of x] / &#8467;<br>P(collision) &asymp; 1 &minus; exp(&minus;&int; G ds)</div>
+      <p class="small">G is hazard per meter traveled by the car's front edge. Driving through an object of probability q adds about &minus;log(1 &minus; q). Prior &#8467; = 4 m (one car length).</p>
+    </div>
+    <div class="col">
+      <div class="card"><h3>THE CONSTRAINT AT EACH SOLVE</h3>
+      <p class="small">&sum; G(front) ds over the 4 s plan<br>+ R(end of plan) &nbsp;<span class="tiny">least hazard from there to the goal</span><br>&le; &minus;log(1 &minus; &delta;) &minus; H<sub>spent</sub> &nbsp;<span class="tiny">budget left</span></p>
+      <p class="small">H<sub>spent</sub> stops replanning from spending &delta; twice. R stops a plan from spending the budget it needs to finish. If nothing fits, the car brakes.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 12 calibration -->
+<section class="slide">
+  <h2>Calibration</h2>
+  <p class="kicker">Paper 5: On Calibration of Modern Neural Networks (Guo et al., ICML 2017)</p>
+  <div class="row">
+    <div class="col">
+      <p>A probability is <strong>calibrated</strong> if, among all cells given p = 0.3, 30% really are occupied.</p>
+      <p><strong>Reliability diagram:</strong> group predictions into bins, plot mean prediction vs observed frequency. Calibrated = on the diagonal.</p>
+      <p><strong>ECE</strong> (expected calibration error): average gap between the two, weighted by bin size.</p>
+      <p>Guo et al. showed modern deep networks are usually <strong>overconfident</strong>, and that one number fixes much of it:</p>
+      <div class="eq">temperature scaling: &nbsp; p&prime; = &sigma;(z / T)</div>
+      <p class="small">Fit T on held-out data by maximum likelihood. T &gt; 1 softens probabilities toward 0.5; T &lt; 1 sharpens them. It never changes which cells rank as more likely.</p>
+    </div>
+    <div class="col">
+      <svg viewBox="0 0 320 320" width="100%">
+        <rect x="40" y="10" width="270" height="270" fill="#fff" stroke="#dcdad2"/>
+        <line x1="40" y1="280" x2="310" y2="10" stroke="#7a7a72" stroke-dasharray="4 4"/>
+        <polyline points="40,280 80,276 120,268 160,250 200,220 240,170 280,110 305,60" fill="none" stroke="#eb6834" stroke-width="3"/>
+        <polyline points="40,280 80,240 120,201 160,160 200,122 240,82 280,42 305,16" fill="none" stroke="#2a78d6" stroke-width="3"/>
+        <text x="175" y="305" font-size="13" text-anchor="middle" fill="#4a4a45">predicted p</text>
+        <text x="20" y="150" font-size="13" text-anchor="middle" fill="#4a4a45" transform="rotate(-90 20 150)">observed frequency</text>
+        <text x="215" y="250" font-size="13" fill="#eb6834">overconfident</text>
+        <text x="80" y="200" font-size="13" fill="#2a78d6">calibrated</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 13 two levels -->
+<section class="slide">
+  <h2>Two levels of calibration</h2>
+  <p class="kicker">Something we found today that the proposal did not anticipate</p>
+  <div class="row">
+    <div class="col">
+      <div class="card blue"><h3>CELL LEVEL (the proposal's check)</h3><p>Are the network's per-cell probabilities right? Reliability diagram and ECE on observed cells. Fix: temperature scaling.</p></div>
+      <div class="card orange"><h3>PATH LEVEL (what the planner needs)</h3><p>Is the planner's <strong>path</strong> risk right? A path's predicted risk also depends on the correlation model (&#8467;). Check: random 4 s rollouts, predicted risk vs whether Occ3D says they hit something. Fix: fit &#8467; (one scale) on held-out scenes.</p></div>
+    </div>
+    <div class="col">
+      <p>Why cell calibration is not enough: the network leaves a floor of p &asymp; 0.025 on open road (true rate &asymp; 0.008 there). With &#8467; = 4 m, 30 m of empty road already reads as about 30% risk, so every budget &delta; &le; 0.2 is infeasible.</p>
+      <p>Even a perfectly calibrated floor (0.008) would read about 6% for the same drive. Per-cell truth does not give path truth; the correlation assumption has to be calibrated too.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Part 2 -->
+<section class="slide part">
+  <h1>Part 2. What is built</h1>
+  <p>Everything below was built and run on Nov 20 and is in the repo.</p>
+</section>
+
+<!-- 15 pipeline -->
+<section class="slide">
+  <h2>Pipeline</h2>
+  <p class="kicker">Two stages, as in the proposal</p>
+  <svg viewBox="0 0 1150 380" width="100%">
+    <style>.b{fill:#fff;stroke:#dcdad2;rx:8}.t{font:16px system-ui;fill:#1d1d1b}.s{font:13px system-ui;fill:#7a7a72}.a{stroke:#4a4a45;stroke-width:2;marker-end:url(#ar)}</style>
+    <defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4a4a45"/></marker></defs>
+    <text x="0" y="22" class="s">STAGE 1: synthetic, true risk known</text>
+    <rect x="0" y="35" width="220" height="80" class="b"/><text x="14" y="65" class="t">Random road world</text><text x="14" y="90" class="s">objects exist with prob. q</text>
+    <rect x="290" y="35" width="220" height="80" class="b"/><text x="304" y="65" class="t">Probability map</text><text x="304" y="90" class="s">optionally miscalibrated (T)</text>
+    <rect x="580" y="35" width="240" height="80" class="b" style="stroke:#2a78d6"/><text x="594" y="65" class="t">Risk MPC (&#948;) / threshold MPC (&#964;)</text><text x="594" y="90" class="s">closed loop, 200 maps</text>
+    <rect x="890" y="35" width="250" height="80" class="b"/><text x="904" y="65" class="t">Exact true risk</text><text x="904" y="90" class="s">1 &#8722; &#8719;(1 &#8722; q) over objects touched</text>
+    <line x1="220" y1="75" x2="288" y2="75" class="a"/><line x1="510" y1="75" x2="578" y2="75" class="a"/><line x1="820" y1="75" x2="888" y2="75" class="a"/>
+    <text x="0" y="182" class="s">STAGE 2: nuScenes mini, 123 scenarios</text>
+    <rect x="0" y="195" width="220" height="80" class="b"/><text x="14" y="225" class="t">LiDAR sweep</text><text x="14" y="250" class="s">features on the 200 &#215; 200 grid</text>
+    <rect x="290" y="195" width="220" height="80" class="b" style="stroke:#2a78d6"/><text x="304" y="225" class="t">Occupancy network</text><text x="304" y="250" class="s">U-Net, 5-fold by scene</text>
+    <rect x="580" y="195" width="240" height="80" class="b" style="stroke:#eb6834"/><text x="594" y="225" class="t">Calibrate</text><text x="594" y="250" class="s">cell: T &#183; path: &#8467;</text>
+    <rect x="890" y="195" width="250" height="80" class="b" style="stroke:#2a78d6"/><text x="904" y="225" class="t">Risk MPC vs threshold</text><text x="904" y="250" class="s">start/goal from the real drive</text>
+    <rect x="890" y="300" width="250" height="70" class="b"/><text x="904" y="330" class="t">Occ3D labels</text><text x="904" y="352" class="s">count real collisions</text>
+    <line x1="220" y1="235" x2="288" y2="235" class="a"/><line x1="510" y1="235" x2="578" y2="235" class="a"/><line x1="820" y1="235" x2="888" y2="235" class="a"/><line x1="1015" y1="298" x2="1015" y2="278" class="a"/>
+  </svg>
+</section>
+
+<!-- 16 engineering -->
+<section class="slide">
+  <h2>What broke on the way, and the fixes</h2>
+  <p class="kicker">Useful for the report's method section; each is now in the code</p>
+  <table>
+    <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+    <tr><td>Risk MPC frozen at any &delta;</td><td>Cell independence makes faint blobs walls</td><td>Correlation length &#8467; (slide 11)</td></tr>
+    <tr><td>Car stops in front of obstacles</td><td>Goal-distance cost cannot see around them; IPOPT picks "stop"</td><td>Dijkstra cost-to-go on each planner's own map; warm start along its route</td></tr>
+    <tr><td>Solver never converges (300 iterations)</td><td>Linear map interpolation has kinks at every cell edge</td><td>Smooth B-spline lookup tables, built per map (0.05 s/solve, was 1 s)</td></tr>
+    <tr><td>Budget overspent by 2&times;</td><td>Plans spent the whole budget in 4 s, none left to finish</td><td>Risk-to-go term R; brake when no plan fits</td></tr>
+    <tr><td>Hazard band skipped</td><td>One sample per 2 m step at 10 m/s</td><td>Three samples per step</td></tr>
+    <tr><td>Baseline stalls on open road</td><td>B-spline ripple of a 0/1 field and a 1000&times; cost cliff</td><td>Distance-field constraint; capped route cost</td></tr>
+  </table>
+</section>
+
+<!-- 17 stage 1 results -->
+<section class="slide">
+  <h2>Stage 1 result: safety vs progress</h2>
+  <p class="kicker">200 synthetic maps, each method on every map; true risk computed exactly</p>
+  <div class="figwrap"><img class="fig" src="figs/synthetic_tradeoff.png" alt="stage 1 tradeoff"></div>
+  <p class="small">The risk MPC stays <strong>under budget at every &delta;</strong> (true 0.011 at &delta; = 0.05, 0.035 at 0.2) but is conservative: its own predicted risk is about 2&ndash;3&times; the truth, so it stops more often (77% reach the goal at &delta; = 0.05). On these maps a low threshold (&tau; = 0.05: 94% reach, 0.003 risk) is a strong baseline. We report that as found.</p>
+</section>
+
+<!-- 18 miscal -->
+<section class="slide">
+  <h2>Stage 1 result: miscalibration breaks the budget; temperature scaling repairs it</h2>
+  <p class="kicker">&delta; = 0.05; the planner is handed &sigma;(logit(p) / T) instead of p</p>
+  <div class="row">
+    <div class="col" style="flex:1.3"><div class="figwrap"><img class="fig" src="figs/synthetic_miscalibration.png" alt="miscalibration"></div></div>
+    <div class="col">
+      <ul class="small">
+        <li><strong>Overconfident map (T = 0.5):</strong> true risk 0.057, over the 0.05 budget, while the planner believes 0.030.</li>
+        <li><strong>Corrected</strong> (T fitted on 50 separate maps = 1.89, ideal 2): 0.009.</li>
+        <li><strong>Underconfident map (T = 2):</strong> safe (0.001) but timid: 68% reach the goal.</li>
+        <li><strong>Corrected</strong> (fitted 0.47, ideal 0.5): 79% reach, back to the calibrated case (78%).</li>
+      </ul>
+      <p class="small">This is Question 2 in a world where we know the truth. Stage 2 asks it of a real network.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 19 stage 2 setup -->
+<section class="slide">
+  <h2>Stage 2 setup: nuScenes mini</h2>
+  <p class="kicker">Real LiDAR, real labels, a real network's probabilities</p>
+  <div class="row">
+    <div class="col">
+      <ul class="small">
+        <li><strong>Scenario</strong> per keyframe: start at the ego pose and speed; goal = where the real car was 4 s later. Kept if it moved &ge; 8 m and the real path is free in Occ3D: <strong>123 of 404</strong>, from 6 scenes.</li>
+        <li><strong>Network</strong> (CPU stand-in for SurroundOcc): small U-Net on one LiDAR sweep (point counts in 4 height bins, max height, intensity, hit flag), plain cross-entropy, mirror augmentation.</li>
+        <li><strong>5-fold by scene:</strong> train on 6 scenes, fit T on 2, predict 2 never seen. Every keyframe gets an honest out-of-fold prediction. Fitted T: 0.87&ndash;1.11.</li>
+        <li><strong>Limits:</strong> one frame is frozen as a static world; unobserved cells count as free.</li>
+      </ul>
+    </div>
+    <div class="col"><div class="figwrap"><img class="fig" src="figs/nusc_pred_example.png" alt="prediction"></div>
+    <p class="tiny">Left: network p. Middle: Occ3D (yellow obstacle, blue free, purple unseen). Right: p clipped at 0.3, showing the floor on open road. Red: the real drive.</p></div>
+  </div>
+</section>
+
+<!-- 20 stage 2 results -->
+<section class="slide" id="stage2">
+  <h2>Stage 2 result: cell-level calibration</h2>
+  <p class="kicker">5.7 million observed cells, all 404 keyframes, every prediction out-of-fold</p>
+  <div class="row">
+    <div class="col" style="flex:1.6"><div class="figwrap"><img class="fig" src="figs/nusc_reliability.png" alt="cell reliability"></div></div>
+    <div class="col">
+      <ul class="small">
+        <li>The LiDAR network is <strong>already close to calibrated</strong>: ECE 0.025 (an average gap of 2.5 percentage points).</li>
+        <li>It is mildly <strong>overconfident between p = 0.3 and 0.9</strong> (says 0.45, true 0.37).</li>
+        <li>Fitted temperatures per fold: 0.87, 0.87, 0.96, 1.11, 1.07. All near 1, so <strong>temperature scaling changes almost nothing</strong> (ECE 0.025 &rarr; 0.025).</li>
+        <li>The bump at p &asymp; 0.45 is the unobserved space behind objects, where LiDAR gives no evidence.</li>
+      </ul>
+      <p class="small">So for this network, cell-level calibration is not the problem. The next slide asks whether the <strong>path</strong> risk is calibrated.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 20b path level -->
+<section class="slide" id="stage2b">
+  <h2>Stage 2 result: the path risk was the miscalibrated part</h2>
+  <p class="kicker">7,380 random 4 s rollouts from the 123 scenario starts; collision = swept footprint hits an observed Occ3D obstacle</p>
+  <div class="row">
+    <div class="col" style="flex:1.1"><div class="figwrap"><img class="fig" src="figs/path_reliability.png" alt="path reliability"></div></div>
+    <div class="col">
+      <ul class="small">
+        <li>45% of rollouts collide. Predicted hazard separates them well: the median colliding path has <strong>48&times;</strong> the hazard of the median free path.</li>
+        <li>With the 4 m prior, path risk is <strong>overstated</strong>: paths rated 50% collide 22% of the time. Path ECE 0.089.</li>
+        <li>Temperature scaling barely helps (0.078), as expected from the cell result.</li>
+        <li>Fitting one path scale on the <strong>other folds</strong> gives &#8467; &asymp; 7.6 m (per fold 4.9&ndash;8.6 m) and path ECE <strong>0.026</strong>.</li>
+      </ul>
+      <p class="small">Answer to Question 2 so far: a well-calibrated network still gives a miscalibrated planner, because the planner adds an assumption about how cells are correlated. That assumption can be fitted from data.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 20c closed loop -->
+<section class="slide" id="stage2c">
+  <h2>Stage 2 result: closed loop</h2>
+  <p class="kicker"><span class="tag run">running</span> 1,845 runs: risk MPC at &delta; = 0.02&ndash;0.2 with raw, temperature-scaled and path-scaled maps, and the threshold baseline</p>
+  <p>This slide fills in when the runs finish: collision rate (against Occ3D) vs &delta;, and safety vs progress against &tau;.</p>
+</section>
+
+<!-- Part 3 -->
+<section class="slide part">
+  <h1>Part 3. Papers, open questions, next steps</h1>
+</section>
+
+<!-- 22 papers -->
+<section class="slide">
+  <h2>The five papers at a glance</h2>
+  <p class="kicker">PDFs in <code>papers/</code> (run <code>papers/fetch.sh</code>), BibTeX in <code>refs.bib</code></p>
+  <table>
+    <tr><th>#</th><th>Paper</th><th>One-line idea</th><th>Our use</th></tr>
+    <tr><td>1</td><td>SurroundOcc, ICCV 2023</td><td>Six cameras to dense 3D occupancy with attention</td><td>The probability source (Great Lakes); LiDAR U-Net stands in now</td></tr>
+    <tr><td>2</td><td>Let's Make a Splan, 2024</td><td>Keep a robot's collision probability under a limit in trajectory optimization</td><td>The chance constraint P(collision) &le; &delta;</td></tr>
+    <tr><td>3</td><td>Occ3D, NeurIPS D&amp;B 2023</td><td>Occupancy labels for nuScenes with visibility masks</td><td>Ground truth for collisions and for calibration</td></tr>
+    <tr><td>4</td><td>nuScenes, CVPR 2020</td><td>Multi-sensor driving dataset, 1,000 scenes</td><td>Scenes, LiDAR, ego poses (mini split)</td></tr>
+    <tr><td>5</td><td>Guo et al., ICML 2017</td><td>Deep nets are overconfident; temperature scaling fixes much of it</td><td>Reliability, ECE, the correction</td></tr>
+  </table>
+  <p class="small" style="margin-top:14px">Not in the proposal but needed in the report: the correlation-length risk model and the path-level calibration are ours, and a reviewer will ask why they are reasonable. Blackmore 2011 is the closest prior work on splitting risk over a path.</p>
+</section>
+
+<!-- 23 open questions -->
+<section class="slide">
+  <h2>Open questions for the team</h2>
+  <p class="kicker">Decisions, not tasks</p>
+  <ul>
+    <li><strong>Headline claim.</strong> Stage 1 shows the risk MPC keeps its budget and that calibration matters; it does not beat the best threshold on progress. Is the poster's message "risk budgets are only as good as calibration" rather than "risk MPC wins"?</li>
+    <li><strong>Path-level calibration</strong> as a second contribution: keep it central, or keep it as a finding?</li>
+    <li><strong>Great Lakes / SurroundOcc:</strong> worth the setup time before Dec 4, or report the LiDAR network and list SurroundOcc as future work?</li>
+    <li><strong>Platt scaling</strong> (temperature plus a bias term) since the network's error looks like a bias?</li>
+    <li><strong>Conservatism:</strong> spend time on an &#8467; / margin ablation on stage 1, or report it as a limitation?</li>
+  </ul>
+</section>
+
+<!-- 24 todo -->
+<section class="slide">
+  <h2>To-do list</h2>
+  <p class="kicker">Also in <code>TODO.md</code></p>
+  <div class="row">
+    <div class="col">
+      <div class="card green"><h3>DONE (NOV 20)</h3><ul class="small">
+        <li>Repo, papers, references</li><li>Baseline and risk-budgeted MPC</li><li>Stage 1: 200-map sweep, miscalibration + correction</li>
+        <li>nuScenes mini + Occ3D, 123 scenarios</li><li>Occupancy network, 5-fold</li><li>Cell and path calibration code</li></ul></div>
+    </div>
+    <div class="col">
+      <div class="card orange"><h3>NEXT</h3><ul class="small">
+        <li>Finish stage 2 runs; read the failure cases (<span class="tag run">running</span>)</li>
+        <li>Answer the open questions (previous slide)</li>
+        <li>Great Lakes: SurroundOcc &rarr; <code>pred.npz</code>, rerun stage 2</li>
+        <li>Optional ablations: &#8467; / margin / blur; Platt scaling</li>
+        <li><strong>Poster PDF by Fri Dec 4</strong>; print for Dec 7</li>
+        <li><strong>Report by Fri Dec 11</strong> on Overleaf; Anuj: perception, Brian: experiments, Brandon: controllers</li>
+        <li>Add Anuj and Brian to the GitHub repo</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 25 glossary -->
+<section class="slide">
+  <h2>Glossary</h2>
+  <p class="kicker">Symbols used in this deck and the code</p>
+  <table class="small">
+    <tr><td><strong>p</strong></td><td>Occupancy probability of one cell</td><td><strong>z</strong></td><td>Logit, the network's raw score; p = &sigma;(z)</td></tr>
+    <tr><td><strong>&delta;</strong></td><td>Risk budget: max collision probability per drive</td><td><strong>&tau;</strong></td><td>Baseline threshold: p &gt; &tau; is an obstacle</td></tr>
+    <tr><td><strong>T</strong></td><td>Temperature; p&prime; = &sigma;(z / T)</td><td><strong>&#8467;</strong></td><td>Correlation length: cells closer than this are one object</td></tr>
+    <tr><td><strong>h</strong></td><td>Hazard of a cell, &minus;log(1 &minus; p)</td><td><strong>G</strong></td><td>Hazard per meter the car's front edge travels</td></tr>
+    <tr><td><strong>H</strong></td><td>Hazard summed along a path; risk = 1 &minus; e<sup>&minus;H</sup></td><td><strong>R</strong></td><td>Risk-to-go: least hazard from the plan's end to the goal</td></tr>
+    <tr><td><strong>ECE</strong></td><td>Expected calibration error</td><td><strong>N, dt</strong></td><td>MPC horizon (20 steps) and step (0.2 s)</td></tr>
+    <tr><td><strong>Keyframe</strong></td><td>Annotated nuScenes frame, 2 Hz</td><td><strong>Out-of-fold</strong></td><td>Predicted by a network that never trained on that scene</td></tr>
+  </table>
+</section>
+
+</div>
+<div id="nav"></div>
+<script>
+  // occupancy grid illustration
+  (function () {
+    const g = document.getElementById("g"); if (!g) return;
+    const n = 20, s = 20;
+    const blobs = [[5, 4, 2.2, .95], [14, 6, 1.6, .55], [12, 15, 2.5, .3], [3, 14, 1.4, .8]];
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      let q = 1; for (const [x, y, r, pk] of blobs) q *= 1 - pk * Math.exp(-((i - x) ** 2 + (j - y) ** 2) / (2 * r * r));
+      let p = 1 - q; if (j < 1 || j > 18) p = .97;
+      const v = Math.round(255 - 215 * p);
+      const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      r.setAttribute("x", i * s); r.setAttribute("y", j * s); r.setAttribute("width", s - 1); r.setAttribute("height", s - 1);
+      r.setAttribute("fill", `rgb(${v},${v},${v})`); g.appendChild(r);
+      if (p > .25 && (i + j) % 3 === 0) { const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        t.setAttribute("x", i * s + 2); t.setAttribute("y", j * s + 13); t.setAttribute("font-size", "8");
+        t.setAttribute("fill", p > .6 ? "#fff" : "#333"); t.textContent = p.toFixed(1); g.appendChild(t); }
+    }
+  })();
+  const slides = [...document.querySelectorAll(".slide")];
+  let k = Math.max(0, Math.min(slides.length - 1, (parseInt(location.hash.slice(1)) || 1) - 1));
+  function show() {
+    slides.forEach((s, i) => s.classList.toggle("on", i === k));
+    document.getElementById("nav").textContent = (k + 1) + " / " + slides.length;
+    history.replaceState(null, "", "#" + (k + 1));
+  }
+  function fit() {
+    const sc = Math.min(innerWidth / 1280, innerHeight / 720);
+    document.getElementById("deck").style.transform = `translate(-50%,-50%) scale(${sc})`;
+  }
+  addEventListener("keydown", e => {
+    if (["ArrowRight", "PageDown", " "].includes(e.key)) k = Math.min(slides.length - 1, k + 1);
+    else if (["ArrowLeft", "PageUp"].includes(e.key)) k = Math.max(0, k - 1);
+    else return; e.preventDefault(); show();
+  });
+  addEventListener("click", e => { k = e.clientX > innerWidth / 3 ? Math.min(slides.length - 1, k + 1) : Math.max(0, k - 1); show(); });
+  let tx = null;
+  addEventListener("touchstart", e => tx = e.touches[0].clientX);
+  addEventListener("touchend", e => { if (tx === null) return; const d = e.changedTouches[0].clientX - tx;
+    if (Math.abs(d) > 40) { k = d < 0 ? Math.min(slides.length - 1, k + 1) : Math.max(0, k - 1); show(); } tx = null; });
+  addEventListener("resize", fit); fit(); show();
+</script>
+</body>
+</html>

@@ -19,12 +19,11 @@ import sys
 from multiprocessing import Pool
 
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 from scipy.optimize import minimize_scalar
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from rmpc.calib import sigmoid  # noqa: E402
-from rmpc.maps import footprint_cells, hazard_field  # noqa: E402
+from rmpc.maps import field_lookup, footprint_cells, hazard_field  # noqa: E402
 from rmpc.nusc import ZOE, grid_of  # noqa: E402
 from rmpc.sim import front, step  # noqa: E402
 
@@ -72,7 +71,7 @@ def run(args):
     for name, p in maps.items():
         for kind in ("max", "mean"):
             f = hazard_field(grid.like(p), ZOE, corr_len=1.0, kind=kind, corr_area=1.0)
-            H[f"{kind}_{name}"] = RegularGridInterpolator((grid.xs, grid.ys), f, bounds_error=False, fill_value=None)
+            H[f"{kind}_{name}"] = field_lookup(grid, f)
     rows = []
     for poses in rollouts(i, n):
         swept = footprint_cells(grid, poses[:, :3], ZOE)

@@ -1,0 +1,2 @@
+idx,scene,mode,param,variant,T,corr_len,reached,time,path_len,pred_risk,collided,hit_cells,fails,over,solve_time
+0,0,risk,0.1,raw,1.0,4.0,0,4.4,7.34,0.03187,0,0,22,22,0.0842

@@ -4,6 +4,8 @@ Arrays are indexed [ix, iy]. Cell centers are xs[ix], ys[iy].
 """
 from dataclasses import dataclass
 
+from scipy.interpolate import RegularGridInterpolator
+
 import numpy as np
 from scipy.ndimage import convolve, distance_transform_edt, gaussian_filter, maximum_filter
 
@@ -115,3 +117,12 @@ def footprint_cells(grid, poses, car, step=0.25):
 def path_risk(p, mask):
     """1 - prod(1 - p) over the masked cells (cell-independence model)."""
     return float(-np.expm1(np.log1p(-np.clip(p[mask], 0.0, P_MAX)).sum()))
+
+
+def field_lookup(grid, field):
+    """Linear lookup of a grid field; points outside the grid take the nearest edge value
+    (linear extrapolation can go far negative)."""
+    f = RegularGridInterpolator((grid.xs, grid.ys), field)
+    lo = np.array([grid.xs[0], grid.ys[0]])
+    hi = np.array([grid.xs[-1], grid.ys[-1]])
+    return lambda pts: f(np.clip(np.atleast_2d(pts), lo, hi))

@@ -1,8 +1,7 @@
 """Closed-loop episodes on a static occupancy map."""
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 
-from .maps import Car, clearance, hazard_field
+from .maps import Car, clearance, field_lookup, hazard_field
 from .mpc import MPC
 from .navigation import cost_to_go, guess_along, route
 
@@ -51,7 +50,7 @@ def run_episode(grid, start, goal, mode, param, car=Car(), t_max=20.0, goal_tol=
     ctg, pred = cost_to_go(grid, cell_cost, goal)
     rtg = cost_to_go(grid, haz + 1e-5, goal)[0] if mode == "risk" else None
     mpc = MPC(grid.xs, grid.ys, mode, field, ctg, car=car, eps=0.0, risk_to_go=rtg, **mpc_kw)
-    H = RegularGridInterpolator((grid.xs, grid.ys), haz, bounds_error=False, fill_value=None)
+    H = field_lookup(grid, haz)
     total = -np.log1p(-param) if mode == "risk" else 0.0
     spent = 0.0
     x = np.array(start, float)
