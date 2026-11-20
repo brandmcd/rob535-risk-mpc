@@ -35,13 +35,13 @@ def center(x, car):
 
 
 def run_episode(grid, start, goal, mode, param, car=Car(), t_max=20.0, goal_tol=2.0,
-                corr_len=4.0, route_clearance=0.5, **mpc_kw):
+                corr_len=4.0, route_clearance=0.5, hazard_kw=None, **mpc_kw):
     """param is delta for mode='risk', tau for mode='threshold'.
 
     `spent` is the hazard accumulated along the executed path under the correlation-length
     model, in both modes; pred_risk = 1 - exp(-spent) is the map's own collision estimate.
     """
-    haz = hazard_field(grid, car, corr_len)
+    haz = hazard_field(grid, car, corr_len, **(hazard_kw or {}))
     if mode == "risk":
         field = haz
         cell_cost = 1.0 + KAPPA * haz

@@ -5,7 +5,7 @@ Arrays are indexed [ix, iy]. Cell centers are xs[ix], ys[iy].
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.ndimage import distance_transform_edt, gaussian_filter, maximum_filter
+from scipy.ndimage import convolve, distance_transform_edt, gaussian_filter, maximum_filter
 
 P_MAX = 0.999  # cap so -log(1-p) stays finite
 
@@ -48,21 +48,30 @@ def disk_kernel(radius, res):
     return k / k.sum()
 
 
-def hazard_field(grid, car, corr_len=4.0, smooth=0.5, margin=0.3):
+def hazard_field(grid, car, corr_len=4.0, smooth=0.5, margin=0.3, kind="max", corr_area=2.0):
     """Hazard per meter traveled by the car's front edge, in 1/m.
 
-    Cells closer together than corr_len are treated as one event (one object), and events
-    farther apart as independent. M(x) is the largest -log(1 - p) within half a car width
-    plus `margin` of x (the margin covers the corners in turns); driving a distance ds adds M * ds / corr_len, so a path through an object of
-    probability q adds about -log(1 - q) and P(collision) ~= 1 - exp(-sum).
-    A Gaussian blur of `smooth` meters gives the solver gradients.
+    kind="max": cells closer together than corr_len are one event (one object), events
+    farther apart are independent. M(x) is the largest -log(1 - p) within half a car width
+    plus `margin` of x (the margin covers the corners in turns); driving ds adds
+    M * ds / corr_len, so a path through an object of probability q adds about -log(1 - q).
+
+    kind="mean": collisions are a Poisson field with intensity -log(1 - p) / corr_area per
+    square meter; the strip swept per meter has the car's width, so G is the width times
+    the disk-averaged intensity. Isolated noisy cells count in proportion to their area.
+
+    Either way P(collision) ~= 1 - exp(-sum G ds). A Gaussian blur of `smooth` meters
+    gives the solver gradients.
     """
     h = -np.log1p(-np.clip(grid.p, 0.0, P_MAX))
-    k = disk_kernel(car.width / 2 + margin, grid.res) > 0
-    m = maximum_filter(h, footprint=k, mode="nearest")
+    r = car.width / 2 + margin
+    if kind == "max":
+        m = maximum_filter(h, footprint=disk_kernel(r, grid.res) > 0, mode="nearest") / corr_len
+    else:
+        m = 2 * r * convolve(h, disk_kernel(r, grid.res), mode="nearest") / corr_area
     if smooth > 0:
         m = gaussian_filter(m, smooth / grid.res, mode="nearest")
-    return m / corr_len
+    return m
 
 
 def clearance(grid, tau):

@@ -2,14 +2,19 @@
 
 For each usable scenario (recorded path free in Occ3D and at least 8 m long), the car
 starts at the keyframe pose and speed, and the goal is where the recorded car was 4 s
-later. The map is the network's out-of-fold prediction, raw or temperature-scaled with
-its fold's T. A run collides if the car's swept footprint covers any observed Occ3D
-obstacle cell. Writes results/nusc.csv.
+later. The map is the network's out-of-fold prediction. Risk-MPC variants:
+  raw:  raw probabilities, prior corr_len = 4 m
+  cal:  temperature-scaled with the fold's T, corr_len = 4 m
+  path: temperature-scaled, corr_len = 1 / s with s the path-level scale fitted on the
+        other folds (experiments/path_calib.py)
+A run collides if the car's swept footprint covers any observed Occ3D obstacle cell.
+Writes results/nusc.csv.
 
     python experiments/run_nusc.py --workers 3
 """
 import argparse
 import csv
+import json
 import os
 import sys
 import time
@@ -23,31 +28,36 @@ from rmpc.maps import footprint_cells  # noqa: E402
 from rmpc.nusc import ZOE, grid_of  # noqa: E402
 from rmpc.sim import run_episode  # noqa: E402
 
-DELTAS = [0.01, 0.02, 0.05, 0.1, 0.2]
+DELTAS = [0.02, 0.05, 0.1, 0.2]
 TAUS = [0.1, 0.3, 0.5]
-FIELDS = ["idx", "scene", "mode", "param", "calibrated", "T", "reached", "time", "path_len",
+FIELDS = ["idx", "scene", "mode", "param", "variant", "T", "corr_len", "reached", "time", "path_len",
           "pred_risk", "collided", "hit_cells", "fails", "over", "solve_time"]
 D = {}
 
 
-def load(data, pred):
+def load(data, pred, scale_file="results/path_scale.json"):
     d, p = np.load(data), np.load(pred)
+    if os.path.exists(scale_file):
+        with open(scale_file) as f:
+            D["scale"] = {int(k): v for k, v in json.load(f)["H_max_cal"].items() if k != "all"}
     D.update(occ=d["occ"], seen=d["seen"], speed=d["speed"], goal=d["goal"], scene=d["scene"],
              logits=p["logits"], fold=p["fold"], T=p["T"], usable=d["path_free"])
 
 
 def run(job):
-    i, mode, param, cal = job
-    T = float(D["T"][D["fold"][i]]) if cal else 1.0
+    i, mode, param, variant = job
+    fold = int(D["fold"][i])
+    T = float(D["T"][fold]) if variant in ("cal", "path") else 1.0
+    corr_len = 1.0 / D["scale"][fold] if variant == "path" else 4.0
     p = sigmoid(D["logits"][i].astype(np.float32) / T)
     grid = grid_of(p)
     start = np.array([0.0, 0.0, 0.0, D["speed"][i]])
-    r = run_episode(grid, start, D["goal"][i], mode, param, car=ZOE, t_max=12.0)
+    r = run_episode(grid, start, D["goal"][i], mode, param, car=ZOE, t_max=12.0, corr_len=corr_len)
     swept = footprint_cells(grid, r["poses"], ZOE)
     hits = int((swept & D["occ"][i]).sum())
     seg = np.diff(r["poses"][:, :2], axis=0)
-    return dict(idx=i, scene=int(D["scene"][i]), mode=mode, param=param, calibrated=int(cal),
-                T=round(T, 4), reached=int(r["reached"]), time=round(r["time"], 2),
+    return dict(idx=i, scene=int(D["scene"][i]), mode=mode, param=param, variant=variant,
+                T=round(T, 4), corr_len=round(corr_len, 3), reached=int(r["reached"]), time=round(r["time"], 2),
                 path_len=round(float(np.hypot(*seg.T).sum()), 2), pred_risk=round(r["pred_risk"], 5),
                 collided=int(hits > 0), hit_cells=hits, fails=r["fails"], over=r["over"],
                 solve_time=round(r["solve_time"], 4))
@@ -65,8 +75,9 @@ def main():
     idx = np.where(D["usable"])[0]
     if a.limit:
         idx = idx[:a.limit]
-    jobs = [(int(i), "risk", d, c) for i in idx for d in DELTAS for c in (False, True)]
-    jobs += [(int(i), "threshold", t, False) for i in idx for t in TAUS]
+    variants = ["raw", "cal"] + (["path"] if "scale" in D else [])
+    jobs = [(int(i), "risk", d, v) for i in idx for d in DELTAS for v in variants]
+    jobs += [(int(i), "threshold", t, "raw") for i in idx for t in TAUS]
     os.makedirs(os.path.dirname(a.out) or ".", exist_ok=True)
     t0 = time.time()
     with open(a.out, "w", newline="") as f, Pool(a.workers, initializer=load, initargs=(a.data, a.pred)) as pool:
