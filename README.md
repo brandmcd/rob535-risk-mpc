@@ -9,13 +9,6 @@ A kinematic-bicycle MPC (CasADi/IPOPT) that plans on an occupancy probability ma
 
 Cells within a correlation length (4 m) count as one collision event, so the risk doesn't depend on grid resolution. The budget includes the hazard already driven and a risk-to-go term to the goal, so replanning can't spend it twice. Details are in the module docstrings, starting with `rmpc/maps.py` and `rmpc/mpc.py`.
 
-## Getting started (team)
-
-- [ ] Clone, run Setup, and run `python experiments/plots.py` to check the committed results load
-- [ ] Look through `figures/` and `slides/index.html` for where things stand
-- [ ] Read `rmpc/mpc.py` and `rmpc/maps.py` (the planner and risk model)
-- [ ] Pick an open item from `TODO.md` (failure cases, ablations, poster, report sections) and tell the group
-
 ## Setup
 
 ```bash
