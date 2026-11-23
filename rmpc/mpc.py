@@ -1,14 +1,10 @@
-"""Kinematic-bicycle MPC on an occupancy map, solved with CasADi + IPOPT.
+"""Kinematic-bicycle MPC on an occupancy map (CasADi + IPOPT).
 
-mode="risk":      sum_k G(front_k) * v_k * dt + R(front_N) <= budget, where G is
-                  maps.hazard_field, R is the least hazard from the horizon's end to the goal,
-                  and budget is what is left of -log(1 - delta) after the distance driven.
-mode="threshold": cells with p > tau are obstacles; `field` is circle radius minus the
-                  distance to the nearest obstacle, and must stay <= eps at the centers of
-                  three circles covering the car.
+mode="risk": sum_k G(front_k) * ds_k + R(front_N) <= budget, with G from
+maps.hazard_field, R the hazard-to-go, and budget what is left of -log(1 - delta).
+mode="threshold": three circles covering the car stay clear of cells with p > tau.
 
-Both modes track a cost-to-go field (navigation.cost_to_go) computed on their own map.
-The two fields are baked into B-spline lookup tables, so a new MPC is built per map.
+Both track a cost-to-go field. Fields are baked into lookup tables, so build one MPC per map.
 """
 import time
 
@@ -56,8 +52,7 @@ class MPC:
             if k > 0:
                 cost += 0.5 * ca.sumsqr(U[:, k] - U[:, k - 1])
             if mode == "risk":
-                # trapezoid over start, middle and end of the step so a narrow hazard band
-                # between knots (2 m apart at 10 m/s) is not skipped
+                # sample the middle of the step too so thin hazards between knots count
                 f0, f1 = along(xk, car.rear_to_front), along(nxt, car.rear_to_front)
                 ds = 0.5 * (xk[3] + nxt[3]) * dt
                 risk += (0.25 * F(f0) + 0.5 * F(0.5 * (f0 + f1)) + 0.25 * F(f1)) * ds
@@ -90,9 +85,8 @@ class MPC:
         self._guess = None
 
     def solve(self, x0, budget=0.0, X_guess=None):
-        """Returns the plan; ok is True only for a converged solve whose plan meets the
-        constraint (slack and violation within FEAS_TOL). X_guess is used when there is
-        no previous solution to shift."""
+        """ok is True only if IPOPT converged and the plan meets the constraint.
+        X_guess is used when there is no previous solution to shift."""
         o = self.opti
         o.set_value(self.x0, x0)
         o.set_value(self.budget, budget)

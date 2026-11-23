@@ -51,19 +51,12 @@ def disk_kernel(radius, res):
 
 
 def hazard_field(grid, car, corr_len=4.0, smooth=0.5, margin=0.3, kind="max", corr_area=2.0):
-    """Hazard per meter traveled by the car's front edge, in 1/m.
+    """Hazard G per meter traveled by the car's front edge, so P(collision) ~= 1 - exp(-sum G ds).
 
-    kind="max": cells closer together than corr_len are one event (one object), events
-    farther apart are independent. M(x) is the largest -log(1 - p) within half a car width
-    plus `margin` of x (the margin covers the corners in turns); driving ds adds
-    M * ds / corr_len, so a path through an object of probability q adds about -log(1 - q).
-
-    kind="mean": collisions are a Poisson field with intensity -log(1 - p) / corr_area per
-    square meter; the strip swept per meter has the car's width, so G is the width times
-    the disk-averaged intensity. Isolated noisy cells count in proportion to their area.
-
-    Either way P(collision) ~= 1 - exp(-sum G ds). A Gaussian blur of `smooth` meters
-    gives the solver gradients.
+    kind="max": cells within corr_len are one event. G is the largest -log(1 - p) within
+    half a car width plus `margin`, divided by corr_len.
+    kind="mean": Poisson field with intensity -log(1 - p) / corr_area per square meter.
+    The result is blurred by `smooth` meters for gradients.
     """
     h = -np.log1p(-np.clip(grid.p, 0.0, P_MAX))
     r = car.width / 2 + margin

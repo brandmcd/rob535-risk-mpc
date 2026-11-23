@@ -1,8 +1,6 @@
 """Stage 2 preprocessing: one record per nuScenes-mini keyframe.
 
-Saves data/stage2/samples.npz with LiDAR BEV features, Occ3D obstacle/observed maps,
-and a planning scenario (start speed, goal = recorded ego position `horizon` s later,
-and whether the recorded path is free in the Occ3D labels).
+Saves data/stage2/samples.npz: BEV features, Occ3D maps and a start/goal scenario.
 
     python experiments/prep_nusc.py
 """

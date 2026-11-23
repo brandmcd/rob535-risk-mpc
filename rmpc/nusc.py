@@ -1,9 +1,7 @@
-"""nuScenes mini + Occ3D loading: LiDAR bird's-eye-view features, flattened occupancy
-labels, and start/goal scenarios taken from the recorded ego motion.
+"""nuScenes mini + Occ3D loading: LiDAR BEV features, 2D occupancy labels, ego tracks.
 
-All grids are the Occ3D ego-frame grid: 200 x 200 cells of 0.4 m over x, y in [-40, 40],
-x forward, y left. Occ3D voxels are 0.4 m tall from z = -1 m; the road surface sits in
-layer 2 (z ~ 0), so obstacles are taken from layers 3-7 (0.2 m to 2.2 m above the road).
+Grids are the Occ3D ego frame: 200 x 200 cells of 0.4 m, x forward, y left. Obstacles
+come from voxel layers 3-7 (0.2 to 2.2 m above the road).
 """
 import json
 import os

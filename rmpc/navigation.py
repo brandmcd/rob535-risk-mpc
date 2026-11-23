@@ -1,8 +1,6 @@
-"""Cost-to-go fields by Dijkstra on the grid, used as the MPC's tracking cost.
+"""Dijkstra cost-to-go on the grid, used as the MPC tracking cost and warm start.
 
-A goal-distance cost cannot see around obstacles, and IPOPT then settles on stopping in
-front of them. The cost-to-go encodes a global route on the planner's own map, and the
-route also gives the MPC a warm start.
+A plain goal-distance cost made IPOPT stop in front of obstacles.
 """
 import numpy as np
 from scipy.sparse import coo_matrix

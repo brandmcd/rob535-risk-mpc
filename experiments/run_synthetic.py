@@ -1,8 +1,7 @@
 """Stage 1: baseline vs risk-budgeted MPC on synthetic maps with known risk.
 
-Writes results/synthetic.csv, one row per (map, method, parameter, map temperature).
-The miscalibration runs give the risk MPC sigmoid(logit(p) / T) instead of p, then a
-temperature fitted on separate calibration maps (fit_T) to undo it.
+Writes results/synthetic.csv. Miscalibration runs distort p with a temperature, then
+undo it with one fitted on separate maps.
 
     python experiments/run_synthetic.py --maps 200 --workers 3
 """
@@ -37,8 +36,7 @@ def fit_correction(T_true, n_maps=50, samples=20, rng_seed=0):
     for s in range(n_maps):
         w = make_world(np.random.default_rng(CALIB_SEED0 + s))
         p_seen = apply_temperature(w.grid.p, T_true)
-        # only cells some obstacle covers: elsewhere p = 0 exactly, and the logit clip at
-        # 1e-6 would dominate the fit (a real network never outputs exact zeros)
+        # skip cells with p = 0 exactly, the logit clip would dominate the fit
         road = (np.abs(w.grid.ys)[None, :] < 7.0) & (w.grid.p > 0)
         for _ in range(samples):
             exists = rng.random(len(w.q)) < w.q

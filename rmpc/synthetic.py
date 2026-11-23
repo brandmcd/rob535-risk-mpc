@@ -1,9 +1,7 @@
-"""Synthetic roads with object-level ground truth.
+"""Synthetic roads with disk obstacles that each exist with probability q.
 
-Each obstacle is a disk that exists with probability q, independently of the others. The
-planner sees the per-cell marginal p = 1 - prod(1 - q) over the disks covering the cell.
-The true chance that a path collides is 1 - prod(1 - q) over the obstacles its swept
-area touches, so stage 1 can score risk exactly without sampling.
+The planner sees per-cell marginals. True path risk is 1 - prod(1 - q) over the
+obstacles the swept area touches, so it is exact.
 """
 from dataclasses import dataclass
 

@@ -1,13 +1,9 @@
-"""Stage 2: both planners on nuScenes-mini scenarios with network occupancy probabilities.
+"""Stage 2: both planners on nuScenes-mini scenarios using the network's predictions.
 
-For each usable scenario (recorded path free in Occ3D and at least 8 m long), the car
-starts at the keyframe pose and speed, and the goal is where the recorded car was 4 s
-later. The map is the network's out-of-fold prediction. Risk-MPC variants:
-  raw:  raw probabilities, prior corr_len = 4 m
-  cal:  temperature-scaled with the fold's T, corr_len = 4 m
-  path: temperature-scaled, corr_len = 1 / s with s the path-level scale fitted on the
-        other folds (experiments/path_calib.py)
-A run collides if the car's swept footprint covers any observed Occ3D obstacle cell.
+Goal is where the recorded car was 4 s later. Risk-MPC variants:
+  raw:  raw probabilities, corr_len = 4 m
+  cal:  temperature-scaled, corr_len = 4 m
+  path: temperature-scaled, corr_len = 1 / s from path_calib.py
 Writes results/nusc.csv.
 
     python experiments/run_nusc.py --workers 3

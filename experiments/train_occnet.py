@@ -1,14 +1,8 @@
-"""Stage 2 occupancy network: LiDAR BEV features -> per-cell obstacle probability.
+"""Stage 2 occupancy network: small U-Net on LiDAR BEV features.
 
-A small U-Net trained with plain binary cross-entropy on observed cells, 5-fold by scene:
-each fold trains on 6 scenes, keeps 2 for fitting the temperature, and predicts the 2
-held-out scenes. Every sample gets an out-of-fold prediction.
-
-Writes data/stage2/pred.npz: logits (N, 200, 200) float16, fold, and the per-fold
-temperature T fitted on that fold's calibration scenes.
-
-This is the CPU stand-in for SurroundOcc; any network that writes the same file can
-replace it.
+5 folds by scene (6 train, 2 for temperature, 2 held out). Writes data/stage2/pred.npz
+with logits, fold and per-fold temperature T. Any network that writes the same file
+can replace it.
 
     python experiments/train_occnet.py --epochs 12
 """

@@ -1,14 +1,8 @@
-"""Stage 2 path-level calibration check.
+"""Stage 2 path-level calibration.
 
-Cell-level calibration does not make the planner's path risk calibrated: the risk model
-also assumes how cells are correlated (maps.hazard_field). This script draws random 4 s
-rollouts from each scenario's start, computes each path's hazard H (with corr_len = 1,
-so the planner's risk is 1 - exp(-s * H) with s = 1 / corr_len), and records whether the
-swept footprint hits an observed Occ3D obstacle.
-
-It then fits s by maximum likelihood on paths from the other folds' scenes (leave one
-fold out) and writes results/path_calib.npz (per-path data) and results/path_scale.json
-(fitted s per fold, for raw and temperature-scaled maps).
+Draws random 4 s rollouts per scenario, computes each path's hazard H (corr_len = 1) and
+whether it hits an Occ3D obstacle, then fits a scale s in 1 - exp(-s * H) per held-out
+fold. Writes results/path_calib.npz and results/path_scale.json.
 
     python experiments/path_calib.py --workers 3
 """

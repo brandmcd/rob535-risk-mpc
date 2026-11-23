@@ -37,8 +37,7 @@ def run_episode(grid, start, goal, mode, param, car=Car(), t_max=20.0, goal_tol=
                 corr_len=4.0, route_clearance=0.5, hazard_kw=None, **mpc_kw):
     """param is delta for mode='risk', tau for mode='threshold'.
 
-    `spent` is the hazard accumulated along the executed path under the correlation-length
-    model, in both modes; pred_risk = 1 - exp(-spent) is the map's own collision estimate.
+    pred_risk = 1 - exp(-spent) is the map's own collision estimate for the driven path.
     """
     haz = hazard_field(grid, car, corr_len, **(hazard_kw or {}))
     if mode == "risk":
